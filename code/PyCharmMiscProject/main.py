@@ -1,9 +1,12 @@
-%matplotlib inline
+import matplotlib
+from jedi.api.refactoring import inline
 import torch
 from IPython import display
 from matplotlib import pyplot as plt
 import numpy as np
 import random
+import matplotlib.pyplot as plt
+from pkg_resources import require
 
 # a = torch.zeros(2,3)
 # print(a)
@@ -85,7 +88,55 @@ features = torch.randn(num_examples, num_inputs,dtype=torch.float32)
 labels = true_w[0]*features[:,0] + true_w[1]*features[:,1] + true_b
 labels += torch.tensor(np.random.normal(0,0.01,size=labels.size()), dtype=torch.float32)
 
-print(features[0],labels[0])
+# print(features[0],labels[0])
 
-set_figsize()
-plt.scatter(features[:, 1].numpy(), labels.numpy(), 1);
+
+# 转换为numpy数组以便绘图
+features_np = features.numpy()
+labels_np = labels.numpy()
+
+# 创建子图
+fig, (ax2) = plt.subplots(1, 1, figsize=(5, 5))
+
+
+# 特征 vs 标签
+# scatter2 = ax2.scatter(features_np[:, 1], labels_np, c=labels_np, cmap='viridis', alpha=0.6)
+# ax2.set_xlabel('Feature(x)')
+# ax2.set_ylabel('Labels (y)')
+# ax2.set_title('Feature vs Labels')
+# plt.colorbar(scatter2, ax=ax2)
+#
+# plt.tight_layout()
+# plt.show()
+
+#返回batch_size(批量大小)个随机样本的特征与标签
+def data_iter(batch_size, features, labels):
+    num_examples = len(features)
+    indices = list(range(num_examples))
+    random.shuffle(indices)
+    for i in range(0, num_examples, batch_size):
+        j = torch.LongTensor(indices[i:min(i + batch_size, num_examples)])
+        yield features.index_select(0, j), labels.index_select(0, j)
+
+# batch_size = 10
+#
+# for x,y in data_iter(batch_size, features, labels):
+#     print(x,y)
+#     break
+
+w = torch.tensor(np.random.normal(0,0.01,(num_inputs,1)),dtype=torch.float32)
+b = torch.zeros(1,dtype=torch.float32)
+
+w.requires_grad_(True)
+b.requires_grad_(True)
+
+def linrag(X, w, b):
+    return torch.mm(X, w) + b
+
+def square_loss(y_hat,y):
+    return (y_hat - y.view(y_hat.size()))*2/2
+def sgd(params, lr, batch_size):
+    for param in params:
+        param.data -= lr * param.grad / batch_size
+
+
