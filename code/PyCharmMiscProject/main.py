@@ -7,9 +7,13 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from pkg_resources import require
+from pyexpat import features
+from torch import nn
+
+
 # import os
 # import pandas as pd
-# from torch.utils import data
+from torch.utils import data
 # from d2lzh_pytorch import torch as d2l
 
 # a = torch.zeros(2,3)
@@ -84,34 +88,34 @@ from pkg_resources import require
 # d = a + b
 # print(time()-start)
 
-num_inputs = 2
-num_examples = 1000
-true_w = [2,-3,4]
-true_b = 4.2
-features = torch.randn(num_examples, num_inputs,dtype=torch.float32)
-labels = true_w[0]*features[:,0] + true_w[1]*features[:,1] + true_b
-labels += torch.tensor(np.random.normal(0,0.01,size=labels.size()), dtype=torch.float32)
-
-print(features[0],labels[0])
+# num_inputs = 2
+# num_examples = 1000
+# true_w = [2,-3,4]
+# true_b = 4.2
+# features = torch.randn(num_examples, num_inputs,dtype=torch.float32)
+# labels = true_w[0]*features[:,0] + true_w[1]*features[:,1] + true_b
+# labels += torch.tensor(np.random.normal(0,0.01,size=labels.size()), dtype=torch.float32)
+#
+# print(features[0],labels[0])
 
 
 # 转换为numpy数组以便绘图
-features_np = features.numpy()
-labels_np = labels.numpy()
-
-# 创建子图
-fig, (ax2) = plt.subplots(1, 1, figsize=(5, 5))
+# features_np = features.numpy()
+# labels_np = labels.numpy()
+#
+# # 创建子图
+# fig, (ax2) = plt.subplots(1, 1, figsize=(5, 5))
 
 
 #特征 vs 标签
-scatter2 = ax2.scatter(features_np[:, 1], labels_np, c=labels_np, cmap='viridis', alpha=0.6)
-ax2.set_xlabel('Feature(x)')
-ax2.set_ylabel('Labels (y)')
-ax2.set_title('Feature vs Labels')
-plt.colorbar(scatter2, ax=ax2)
-
-plt.tight_layout()
-plt.show()
+# scatter2 = ax2.scatter(features_np[:, 1], labels_np, c=labels_np, cmap='viridis', alpha=0.6)
+# ax2.set_xlabel('Feature(x)')
+# ax2.set_ylabel('Labels (y)')
+# ax2.set_title('Feature vs Labels')
+# plt.colorbar(scatter2, ax=ax2)
+#
+# plt.tight_layout()
+# plt.show()
 
 #返回batch_size(批量大小)个随机样本的特征与标签
 def data_iter(batch_size, features, labels):
@@ -202,10 +206,39 @@ def sgd(params, lr, batch_size):
 # true_b = 4.2
 # features, labels = d2l.synthetic_data(true_w,true_b, 1000)
 #
-# #读取数据集
-# def load_array(data_arrays,batch_size,is_train=True):
-#     dataset = data.TensorDataset(*data_arrays)
-#     return data.DataLoader(dataset,batch_size,shuffle=is_train,)
+
+def synthetic_data(w,b,num_examples):
+    x = torch.normal(0,1,(num_examples,len(w)))
+    y = torch.matmul(x,w) + b
+    y += torch.normal(0,0.01,y.shape)
+    return x,y.reshape(-1,1)
+#生成数据集
+true_w = torch.tensor([2,-3.4])
+true_b = 4.2
+features, labels = synthetic_data(true_w,true_b,1000)
+
+#读取数据集
 # batch_size = 10
-# data_iter = load_array((features,labels),batch_size)
-# next(iter(data_iter))
+#
+# for x,y in data_iter(batch_size, features, labels):
+#     print(x,y)
+#     break
+
+net = nn.Sequential(nn.Linear(2,1))
+net[0].weight.data.normal_(0,0.01)
+net[0].bias.data.fill_(0)
+
+loss = nn.MSELoss()
+
+trainer = torch.optim.SGD(net.parameters(),lr=0.03)
+batch_size = 10
+num_epochs = 3
+for epoch in range(num_epochs):
+    for x,y in data_iter(batch_size, features, labels):
+        l = loss(net(x),y)
+        trainer.zero_grad()
+        l.backward()
+        trainer.step()
+    l = loss(net(features),labels)
+    print(f'epoch{epoch+1},loss{l:f}')
+
