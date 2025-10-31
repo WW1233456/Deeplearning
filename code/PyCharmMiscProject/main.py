@@ -1,4 +1,5 @@
 import matplotlib
+import torchvision
 from jedi.api.refactoring import inline
 import torch
 from IPython import display
@@ -15,6 +16,7 @@ from torch import nn
 # import pandas as pd
 from torch.utils import data
 # from d2lzh_pytorch import torch as d2l
+from torchvision import transforms
 
 # a = torch.zeros(2,3)
 # print(a)
@@ -224,21 +226,32 @@ features, labels = synthetic_data(true_w,true_b,1000)
 #     print(x,y)
 #     break
 
-net = nn.Sequential(nn.Linear(2,1))
-net[0].weight.data.normal_(0,0.01)
-net[0].bias.data.fill_(0)
+# net = nn.Sequential(nn.Linear(2,1))
+# net[0].weight.data.normal_(0,0.01)
+# net[0].bias.data.fill_(0)
+#
+# loss = nn.MSELoss()
+#
+# trainer = torch.optim.SGD(net.parameters(),lr=0.03)
+# batch_size = 10
+# num_epochs = 3
+# for epoch in range(num_epochs):
+#     for x,y in data_iter(batch_size, features, labels):
+#         l = loss(net(x),y)
+#         trainer.zero_grad()
+#         l.backward()
+#         trainer.step()
+#     l = loss(net(features),labels)
+#     print(f'epoch{epoch+1},loss{l:f}')
 
-loss = nn.MSELoss()
+#softmax图像分类数据集
 
-trainer = torch.optim.SGD(net.parameters(),lr=0.03)
-batch_size = 10
-num_epochs = 3
-for epoch in range(num_epochs):
-    for x,y in data_iter(batch_size, features, labels):
-        l = loss(net(x),y)
-        trainer.zero_grad()
-        l.backward()
-        trainer.step()
-    l = loss(net(features),labels)
-    print(f'epoch{epoch+1},loss{l:f}')
+def use_svg_display():
+    """Use svg format to display plot in jupyter"""
+    display.display_svg('svg')
 
+trans = transforms.ToTensor()
+mnist_train = torchvision.datasets.MNIST(root='./data', train=True, transform=trans, download=True)
+mnist_test = torchvision.datasets.MNIST(root='./data', train=False, transform=trans)
+
+len(mnist_train), len(mnist_test)
